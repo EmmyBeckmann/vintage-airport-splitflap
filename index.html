@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vintage Airport Split-Flap Display</title>
+    <title>Heathrow Terminal 3 - 1971 Solari Display</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,86 +14,113 @@
         }
 
         body {
-            background: #000;
-            font-family: 'Courier New', Courier, monospace;
+            background: #1a1a1a;
+            font-family: 'IBM Plex Mono', 'Courier New', monospace;
             color: #fff;
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 30px 20px;
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-
-        .header {
+        .airport-header {
             text-align: center;
-            margin-bottom: 40px;
-            font-size: 3em;
-            letter-spacing: 12px;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            letter-spacing: 8px;
             color: #fff;
             font-weight: 300;
             text-transform: uppercase;
         }
 
-        .board-container {
-            background: #1a1a1a;
-            padding: 30px;
-            border-radius: 10px;
+        .board-frame {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 40px;
+            border-radius: 5px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
-        .board {
+        .column-headers {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-        }
-
-        .header-row {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-            text-align: center;
+            grid-template-columns: 80px 120px 1fr 120px 150px;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 0 10px;
+            font-size: 0.9em;
+            color: #999;
+            font-weight: 600;
             letter-spacing: 2px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #ffa500;
         }
 
         .flight-row {
-            display: contents;
+            display: grid;
+            grid-template-columns: 80px 120px 1fr 120px 150px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
-        .cell {
-            background: #000;
-            border: 3px solid #333;
-            border-radius: 8px;
-            padding: 25px 15px;
-            text-align: center;
-            font-size: 2.5em;
-            font-weight: 700;
-            letter-spacing: 3px;
+        .flap-module {
             position: relative;
+            background: #000;
+            border-radius: 3px;
             overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-            font-family: 'Courier New', Courier, monospace;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        .cell::before {
+        .airline-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 8px;
+            background: #000;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .airline-code {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            padding: 4px;
+            border-radius: 3px;
+            letter-spacing: 1px;
+        }
+
+        .ba { background: #075aaa; }
+        .tw { background: #c8102e; }
+        .pa { background: #003366; }
+        .lh { background: #f9b000; color: #003366 !important; }
+        .af { background: #002157; }
+        .kl { background: #00a1de; }
+        .ly { background: #d40f14; }
+        .rg { background: #00843d; }
+        .oa { background: #003478; }
+
+        .flap-cell {
+            position: relative;
+            padding: 18px 12px;
+            background: #000;
+            border-radius: 3px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flap-cell::before {
             content: '';
             position: absolute;
             top: 50%;
             left: 0;
             right: 0;
-            height: 2px;
-            background: #222;
-            transform: translateY(-50%);
-            z-index: 1;
+            height: 1px;
+            background: #1a1a1a;
+            z-index: 2;
         }
 
-        .cell::after {
+        .flap-cell::after {
             content: '';
             position: absolute;
             top: 0;
@@ -99,204 +128,174 @@
             right: 0;
             bottom: 0;
             background: linear-gradient(180deg, 
-                rgba(255,255,255,0.1) 0%, 
-                transparent 10%, 
-                transparent 90%, 
-                rgba(0,0,0,0.3) 100%);
+                rgba(255,255,255,0.05) 0%, 
+                transparent 20%, 
+                transparent 80%, 
+                rgba(0,0,0,0.4) 100%);
             pointer-events: none;
+            z-index: 1;
         }
 
         .flap-content {
             position: relative;
-            z-index: 2;
-            color: #ffa500;
-            text-shadow: 0 0 10px rgba(255,165,0,0.5);
-        }
-
-        .cell.flipping .flap-content {
-            animation: flipAnimation 0.6s ease-in-out;
-        }
-
-        @keyframes flipAnimation {
-            0% { transform: scaleY(1); opacity: 1; }
-            25% { transform: scaleY(0.8); opacity: 0.8; }
-            50% { transform: scaleY(0.3); opacity: 0.3; }
-            75% { transform: scaleY(0.8); opacity: 0.8; }
-            100% { transform: scaleY(1); opacity: 1; }
-        }
-
-        .cell.airline {
+            z-index: 3;
+            color: #fff;
             font-size: 1.8em;
-            padding: 25px 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-align: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .flap-cell.flipping .flap-content {
+            animation: flapFlip 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        @keyframes flapFlip {
+            0% { 
+                transform: perspective(400px) rotateX(0deg);
+                opacity: 1;
+            }
+            45% { 
+                transform: perspective(400px) rotateX(90deg);
+                opacity: 0.3;
+            }
+            55% { 
+                transform: perspective(400px) rotateX(-90deg);
+                opacity: 0.3;
+            }
+            100% { 
+                transform: perspective(400px) rotateX(0deg);
+                opacity: 1;
+            }
+        }
+
+        .flight-number .flap-content {
+            font-size: 1.6em;
+            letter-spacing: 3px;
+        }
+
+        .destination .flap-content {
+            font-size: 1.7em;
             letter-spacing: 1px;
         }
 
-        .cell.status {
-            font-size: 1.6em;
-            padding: 25px 10px;
-        }
-
-        .cell.status .flap-content {
+        .time .flap-content {
+            font-size: 1.9em;
             font-weight: 700;
         }
 
-        .status-on-time .flap-content {
-            color: #00ff00 !important;
-            text-shadow: 0 0 10px rgba(0,255,0,0.5);
-        }
-
-        .status-boarding .flap-content {
-            color: #00bfff !important;
-            text-shadow: 0 0 10px rgba(0,191,255,0.5);
-        }
-
-        .status-delayed .flap-content {
-            color: #ff4500 !important;
-            text-shadow: 0 0 10px rgba(255,69,0,0.5);
-        }
-
-        .status-departed .flap-content {
-            color: #888 !important;
-            text-shadow: 0 0 10px rgba(136,136,136,0.3);
-        }
-
-        .status-final-call .flap-content {
-            color: #ff0000 !important;
-            text-shadow: 0 0 10px rgba(255,0,0,0.5);
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 50%, 100% { opacity: 1; }
-            25%, 75% { opacity: 0.6; }
+        .status .flap-content {
+            font-size: 1.3em;
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">DEPARTURES</div>
-        <div class="board-container">
-            <div class="header-row">
-                <div>AIRLINE</div>
-                <div>FLIGHT</div>
-                <div>DESTINATION</div>
-                <div>TIME</div>
-                <div>STATUS</div>
-            </div>
-            <div class="board" id="board"></div>
+    <div class="airport-header">DEPARTURES</div>
+    
+    <div class="board-frame">
+        <div class="column-headers">
+            <div>AIRLINE</div>
+            <div>FLIGHT</div>
+            <div>DESTINATION</div>
+            <div>TIME</div>
+            <div>STATUS</div>
         </div>
+        <div id="flightBoard"></div>
     </div>
 
     <script>
-        const airlines = [
-            'PAN AM', 'TWA', 'EASTERN', 'WESTERN', 'BRANIFF', 'UNITED', 'DELTA', 'AMERICAN',
-            'NORTHWEST', 'CONTINENTAL', 'PIEDMONT', 'REPUBLIC', 'OZARK', 'PSA', 'HUGHES',
-            'NATIONAL', 'ALLEGHENY', 'FRONTIER', 'NORTH CENTRAL', 'SOUTHERN', 'TEXAS INTL',
-            'AIR CALIFORNIA', 'SOUTHWEST', 'MOHAWK', 'LAKE CENTRAL'
+        const airlines1971 = [
+            { code: 'BA', name: 'BRITISH AIRWAYS', class: 'ba' },
+            { code: 'TW', name: 'TWA', class: 'tw' },
+            { code: 'PA', name: 'PAN AM', class: 'pa' },
+            { code: 'LH', name: 'LUFTHANSA', class: 'lh' },
+            { code: 'AF', name: 'AIR FRANCE', class: 'af' },
+            { code: 'KL', name: 'KLM', class: 'kl' },
+            { code: 'LY', name: 'EL AL', class: 'ly' },
+            { code: 'RG', name: 'VARIG', class: 'rg' },
+            { code: 'OA', name: 'OLYMPIC', class: 'oa' }
         ];
 
-        const cities = [
-            'NEW YORK', 'LOS ANGELES', 'CHICAGO', 'SAN FRANCISCO', 'MIAMI', 'BOSTON',
-            'WASHINGTON', 'SEATTLE', 'DETROIT', 'DALLAS', 'ATLANTA', 'PHILADELPHIA',
-            'HOUSTON', 'PHOENIX', 'SAN DIEGO', 'DENVER', 'PORTLAND', 'MINNEAPOLIS',
-            'ST LOUIS', 'BALTIMORE', 'SALT LAKE', 'BUFFALO', 'OAKLAND', 'PITTSBURGH',
-            'SAN ANTONIO', 'MEMPHIS', 'KANSAS CITY', 'NASHVILLE', 'MILWAUKEE', 'CLEVELAND',
-            'NEW ORLEANS', 'INDIANAPOLIS', 'CINCINNATI', 'CHARLOTTE', 'TAMPA', 'ORLANDO',
-            'MONTREAL', 'TORONTO', 'VANCOUVER', 'LONDON', 'PARIS', 'ROME', 'TOKYO',
-            'HONG KONG', 'SYDNEY', 'MEXICO CITY', 'HONOLULU', 'ANCHORAGE', 'JUNEAU', 'RENO'
+        const destinations1971 = [
+            'NEW YORK', 'PARIS', 'FRANKFURT', 'AMSTERDAM', 'ROME', 'ATHENS',
+            'BEIRUT', 'TEL AVIV', 'BOMBAY', 'TEHERAN', 'SINGAPORE',
+            'HONG KONG', 'TOKYO', 'SYDNEY', 'JOHANNESBURG', 'NAIROBI',
+            'CAIRO', 'ISTANBUL', 'ZURICH', 'GENEVA', 'MADRID', 'LISBON',
+            'COPENHAGEN', 'STOCKHOLM', 'OSLO', 'BRUSSELS', 'VIENNA',
+            'MUNICH', 'BERLIN', 'HAMBURG', 'DÜSSELDORF', 'BARCELONA',
+            'MILAN', 'VENICE', 'NICE', 'MONTREAL', 'TORONTO',
+            'CHICAGO', 'LOS ANGELES', 'SAN FRANCISCO', 'BOSTON',
+            'WASHINGTON', 'MIAMI', 'CARACAS', 'RIO DE JANEIRO',
+            'BUENOS AIRES', 'MEXICO CITY', 'DELHI', 'KARACHI', 'BAGHDAD'
         ];
 
         const statuses = ['ON TIME', 'BOARDING', 'DELAYED', 'DEPARTED', 'FINAL CALL'];
 
-        function getStatusClass(status) {
-            return 'status-' + status.toLowerCase().replace(' ', '-');
-        }
-
         function generateFlight() {
-            const airline = airlines[Math.floor(Math.random() * airlines.length)];
+            const airline = airlines1971[Math.floor(Math.random() * airlines1971.length)];
             const flightNum = Math.floor(Math.random() * 900) + 100;
-            const destination = cities[Math.floor(Math.random() * cities.length)];
+            const destination = destinations1971[Math.floor(Math.random() * destinations1971.length)];
             const hour = Math.floor(Math.random() * 24);
             const minute = Math.floor(Math.random() * 60);
             const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
             const status = statuses[Math.floor(Math.random() * statuses.length)];
 
             return {
-                airline: airline,
-                flight: `${airline.code || flightNum}`,
+                airline,
+                flight: `${airline.code}${flightNum}`,
                 destination,
                 time,
                 status
             };
         }
 
-        function createCell(content, className = '', isAirline = false, isStatus = false) {
-            const cell = document.createElement('div');
-            cell.className = `cell ${className}`;
-            if (isAirline) cell.classList.add('airline');
-            if (isStatus) cell.classList.add('status');
-            cell.innerHTML = `<div class="flap-content">${content}</div>`;
-            return cell;
-        }
+        function createFlightRow(flight, delay = 0) {
+            const row = document.createElement('div');
+            row.className = 'flight-row';
 
-        let currentFlights = [];
+            const airline = document.createElement('div');
+            airline.className = 'airline-logo';
+            airline.innerHTML = `<div class="airline-code ${flight.airline.class}">${flight.airline.code}</div>`;
 
-        function updateBoard() {
-            const board = document.getElementById('board');
-            const header = board.querySelector('.header-row');
+            const flightCell = document.createElement('div');
+            flightCell.className = 'flap-module flight-number';
+            flightCell.innerHTML = `<div class="flap-cell"><div class="flap-content">${flight.flight}</div></div>`;
 
-            currentFlights = [];
-            for (let i = 0; i < 50; i++) {
-                currentFlights.push(generateFlight());
-            }
+            const destCell = document.createElement('div');
+            destCell.className = 'flap-module destination';
+            destCell.innerHTML = `<div class="flap-cell"><div class="flap-content">${flight.destination}</div></div>`;
 
-            // Remove all existing flight rows
-            const flightRows = board.querySelectorAll('.flight-row');
-            flightRows.forEach(row => row.remove());
+            const timeCell = document.createElement('div');
+            timeCell.className = 'flap-module time';
+            timeCell.innerHTML = `<div class="flap-cell"><div class="flap-content">${flight.time}</div></div>`;
 
-            currentFlights.forEach((flight, index) => {
-                setTimeout(() => {
-                    const row = document.createElement('div');
-                    row.className = 'flight-row';
+            const statusCell = document.createElement('div');
+            statusCell.className = 'flap-module status';
+            statusCell.innerHTML = `<div class="flap-cell"><div class="flap-content">${flight.status}</div></div>`;
 
-                    const airlineCell = createCell(flight.airline, '', true, false);
-                    const flightCell = createCell(flight.flight, '', false, false);
-                    const destCell = createCell(flight.destination, '', false, false);
-                    const timeCell = createCell(flight.time, '', false, false);
-                    const statusCell = createCell(flight.status, getStatusClass(flight.status), false, true);
+            row.appendChild(airline);
+            row.appendChild(flightCell);
+            row.appendChild(destCell);
+            row.appendChild(timeCell);
+            row.appendChild(statusCell);
 
-                    row.appendChild(airlineCell);
-                    row.appendChild(flightCell);
-                    row.appendChild(destCell);
-                    row.appendChild(timeCell);
-                    row.appendChild(statusCell);
-
-                    board.appendChild(row);
-
+            setTimeout(() => {
+                const cells = row.querySelectorAll('.flap-cell');
+                cells.forEach((cell, index) => {
                     setTimeout(() => {
-                        playClickSound();
-                        [airlineCell, flightCell, destCell, timeCell, statusCell].forEach(cell => {
-                            cell.classList.add('flipping');
-                            setTimeout(() => cell.classList.remove('flipping'), 600);
-                        });
-                    }, 50);
-                }, index * 150);
-            });
+                        playFlapSound();
+                        cell.classList.add('flipping');
+                        setTimeout(() => cell.classList.remove('flipping'), 400);
+                    }, index * 80);
+                });
+            }, delay);
+
+            return row;
         }
 
-        function rotateDisplay() {
-            const cells = document.querySelectorAll('.cell:not(.header-cell)');
-            cells.forEach((cell, index) => {
-                setTimeout(() => {
-                    playClickSound();
-                    cell.classList.add('flipping');
-                    setTimeout(() => cell.classList.remove('flipping'), 600);
-                }, index * 30);
-            });
-        }
-
-        function playClickSound() {
-            // Audio context for click sound
+        function playFlapSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -304,17 +303,45 @@
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            oscillator.frequency.value = 100;
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.03, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.08);
             
             oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.1);
+            oscillator.stop(audioContext.currentTime + 0.08);
+        }
+
+        function updateBoard() {
+            const board = document.getElementById('flightBoard');
+            board.innerHTML = '';
+
+            for (let i = 0; i < 50; i++) {
+                const flight = generateFlight();
+                const row = createFlightRow(flight, i * 120);
+                board.appendChild(row);
+            }
+        }
+
+        function randomFlips() {
+            const cells = document.querySelectorAll('.flap-cell');
+            const randomCells = Array.from(cells)
+                .sort(() => Math.random() - 0.5)
+                .slice(0, Math.floor(Math.random() * 10) + 5);
+            
+            randomCells.forEach((cell, index) => {
+                setTimeout(() => {
+                    playFlapSound();
+                    cell.classList.add('flipping');
+                    setTimeout(() => cell.classList.remove('flipping'), 400);
+                }, index * 100);
+            });
         }
 
         updateBoard();
         setInterval(updateBoard, 25000);
-        setInterval(rotateDisplay, 10000);
+        setInterval(randomFlips, 8000);
     </script>
 </body>
 </html>
