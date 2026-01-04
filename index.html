@@ -322,9 +322,9 @@
                 currentFlights.push(generateFlight());
             }
 
-            board.innerHTML = '';
-            board.appendChild(header);
-
+        // Remove all existing flight rows
+        const flightRows = board.querySelectorAll('.flight-row');
+        flightRows.forEach(row => row.remove());
             currentFlights.forEach((flight, index) => {
                 setTimeout(() => {
                     const row = document.createElement('div');
