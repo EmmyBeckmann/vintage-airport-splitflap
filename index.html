@@ -44,29 +44,31 @@ body { background: #0a0a0a; font-family: 'Roboto Mono', 'Courier New', monospace
 <div id="flights"></div>
 </div>
 <script>
+let audioCtx=null;
 const airlines=[
-{code:'BA',name:'British Airways',css:'ba'},
-{code:'TW',name:'TWA',css:'tw'},
-{code:'PA',name:'Pan Am',css:'pa'},
-{code:'LH',name:'Lufthansa',css:'lh'},
-{code:'AF',name:'Air France',css:'af'},
-{code:'KL',name:'KLM',css:'kl'},
-{code:'LY',name:'El Al',css:'ly'},
-{code:'RG',name:'Varig',css:'rg'},
-{code:'OA',name:'Olympic',css:'oa'},
-{code:'AI',name:'Air India',css:'ai'},
-{code:'BOAC',name:'BOAC',css:'boac'},
-{code:'BEA',name:'BEA',css:'bea'},
-{code:'SU',name:'Aeroflot',css:'su'}
+{code:'BA',name:'British Airways',css:'ba',routes:['NEW YORK','PARIS','FRANKFURT','ROME','ATHENS','MADRID','LISBON','GENEVA','ZURICH','BRUSSELS','AMSTERDAM','COPENHAGEN']},
+{code:'TW',name:'TWA',css:'tw',routes:['NEW YORK','BOSTON','CHICAGO','LOS ANGELES','WASHINGTON']},
+{code:'PA',name:'Pan Am',css:'pa',routes:['NEW YORK','LOS ANGELES','SAN FRANCISCO','TOKYO','HONG KONG','SYDNEY']},
+{code:'LH',name:'Lufthansa',css:'lh',routes:['FRANKFURT','MUNICH','BERLIN','HAMBURG','DUSSELDORF','VIENNA','ZURICH']},
+{code:'AF',name:'Air France',css:'af',routes:['PARIS','NICE','LYON','MARSEILLE','TOULOUSE','BORDEAUX']},
+{code:'KL',name:'KLM',css:'kl',routes:['AMSTERDAM','ROTTERDAM']},
+{code:'LY',name:'El Al',css:'ly',routes:['TEL AVIV']},
+{code:'RG',name:'Varig',css:'rg',routes:['RIO DE JANEIRO','SAO PAULO','BRASILIA']},
+{code:'OA',name:'Olympic',css:'oa',routes:['ATHENS','THESSALONIKI']},
+{code:'AI',name:'Air India',css:'ai',routes:['BOMBAY','DELHI','CALCUTTA','BANGALORE']},
+{code:'BOAC',name:'BOAC',css:'boac',routes:['NEW YORK','SINGAPORE','HONG KONG','JOHANNESBURG','NAIROBI','SYDNEY','TOKYO']},
+{code:'BEA',name:'BEA',css:'bea',routes:['PARIS','AMSTERDAM','BRUSSELS','COPENHAGEN','STOCKHOLM','DUBLIN','EDINBURGH','GLASGOW','BELFAST']},
+{code:'SU',name:'Aeroflot',css:'su',routes:['MOSCOW','LENINGRAD']}
 ];
-const dests=['NEW YORK','PARIS','FRANKFURT','AMSTERDAM','ROME','ATHENS','BEIRUT','TEL AVIV','BOMBAY','DELHI','TEHERAN','SINGAPORE','HONG KONG','TOKYO','SYDNEY','JOHANNESBURG','NAIROBI','CAIRO','ISTANBUL','ZURICH','GENEVA','MADRID','LISBON','COPENHAGEN','STOCKHOLM','OSLO','BRUSSELS','VIENNA','MUNICH','BERLIN','BARCELONA','MILAN','NICE','MONTREAL','TORONTO','CHICAGO','LOS ANGELES','SAN FRANCISCO','BOSTON','WASHINGTON','MIAMI','KARACHI','BAGHDAD','MOSCOW','PRAGUE','WARSAW'];
 const statuses=['ON TIME','BOARDING','DELAYED','DEPARTED','FINAL CALL'];
+function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}}
 function updateClock(){const n=new Date();const h=n.getHours().toString().padStart(2,'0');const m=n.getMinutes().toString().padStart(2,'0');const s=n.getSeconds().toString().padStart(2,'0');document.getElementById('clock').textContent=h+':'+m+':'+s;}
-function playClack(){const a=new AudioContext(),o=a.createBufferSource(),g=a.createGain(),b=a.createBuffer(1,2205,44100),d=b.getChannelData(0);for(let i=0;i<2205;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/300);o.buffer=b;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(0.15,a.currentTime);g.gain.exponentialRampToValueAtTime(0.01,a.currentTime+0.05);o.start();o.stop(a.currentTime+0.05);}
+function playClack(){if(!audioCtx)return;try{const o=audioCtx.createBufferSource(),g=audioCtx.createGain(),b=audioCtx.createBuffer(1,2205,44100),d=b.getChannelData(0);for(let i=0;i<2205;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/300);o.buffer=b;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(0.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.05);o.start();o.stop(audioCtx.currentTime+0.05);}catch(e){}}
 function makeFlaps(txt,w){const d=document.createElement('div');d.className='flaps';d.style.width=w+'px';const p=txt.padEnd(Math.floor(w/28),' ');for(let c of p){const f=document.createElement('div');f.className='flap';f.innerHTML='<span class="char">'+c+'</span>';d.appendChild(f);}return d;}
-function genFlight(){const now=new Date();const h=now.getHours();const m=now.getMinutes();const rh=h+Math.floor(Math.random()*8);const rm=Math.floor(Math.random()*60);const th=(rh%24).toString().padStart(2,'0');const tm=rm.toString().padStart(2,'0');return {airline:airlines[Math.floor(Math.random()*airlines.length)],flight:Math.floor(Math.random()*900)+100,dest:dests[Math.floor(Math.random()*dests.length)],time:th+':'+tm,timeNum:rh*60+rm,status:statuses[Math.floor(Math.random()*statuses.length)]}}
+function genFlight(){const now=new Date();const h=now.getHours();const m=now.getMinutes();const rh=h+Math.floor(Math.random()*8);const rm=Math.floor(Math.random()*60);const th=(rh%24).toString().padStart(2,'0');const tm=rm.toString().padStart(2,'0');const al=airlines[Math.floor(Math.random()*airlines.length)];const dest=al.routes[Math.floor(Math.random()*al.routes.length)];return {airline:al,flight:Math.floor(Math.random()*900)+100,dest:dest,time:th+':'+tm,timeNum:rh*60+rm,status:statuses[Math.floor(Math.random()*statuses.length)]}}
 function update(){const fs=[];const now=new Date();const nm=now.getHours()*60+now.getMinutes();for(let i=0;i<50;i++){fs.push(genFlight());}fs.sort((a,b)=>{let ta=a.timeNum;let tb=b.timeNum;if(ta<nm)ta+=1440;if(tb<nm)tb+=1440;return ta-tb;});const c=document.getElementById('flights');c.innerHTML='';fs.forEach((f,i)=>setTimeout(()=>{const r=document.createElement('div');r.className='row';const logo=document.createElement('div');logo.className='logo '+f.airline.css;logo.textContent=f.airline.code;const fnum=makeFlaps(f.airline.code+f.flight,160);const dest=makeFlaps(f.dest,450);const time=makeFlaps(f.time,130);const stat=makeFlaps(f.status,160);r.appendChild(logo);r.appendChild(fnum);r.appendChild(dest);r.appendChild(time);r.appendChild(stat);c.appendChild(r);setTimeout(()=>{r.querySelectorAll('.flap').forEach((fl,idx)=>setTimeout(()=>{playClack();fl.classList.add('flip');setTimeout(()=>fl.classList.remove('flip'),250);},idx*25));},50);},i*80));}
 function randFlips(){const fs=document.querySelectorAll('.flap');const sel=Array.from(fs).sort(()=>Math.random()-0.5).slice(0,20);sel.forEach((f,i)=>setTimeout(()=>{playClack();f.classList.add('flip');setTimeout(()=>f.classList.remove('flip'),250);},i*60));}
+document.body.addEventListener('click',initAudio,{once:true});
 updateClock();setInterval(updateClock,1000);update();setInterval(update,20000);setInterval(randFlips,6000);
 </script>
 </body>
