@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vintage Airport Split-Flap Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #1a1a1a 0%, #2d2d2d 100%);
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            letter-spacing: 8px;
+            color: #d4af37;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+            font-weight: bold;
+        }
+
+        .board-container {
+            background: #2a2a2a;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+        }
+
+        .flight-row {
+            display: contents;
+        }
+
+        .cell {
+            background: #1a1a1a;
+            border: 3px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 200px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #2a2a2a;
+            z-index: 1;
+        }
+
+        .cell-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .flap-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .flap {
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            background: #1a1a1a;
+            overflow: hidden;
+        }
+
+        .flap-top {
+            top: 0;
+            transform-origin: bottom;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .flap-bottom {
+            bottom: 0;
+            transform-origin: top;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .flap.flip .flap-top {
+            animation: flipTop 0.6s ease-in-out;
+        }
+
+        .flap.flip .flap-bottom {
+            animation: flipBottom 0.6s ease-in-out 0.3s;
+        }
+
+        @keyframes flipTop {
+            0% { transform: rotateX(0deg); }
+            100% { transform: rotateX(-90deg); }
+        }
+
+        @keyframes flipBottom {
+            0% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0deg); }
+        }
+
+        .char {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
+        }
+
+        .airline-logo {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        .header-row {
+            display: contents;
+            font-weight: bold;
+        }
+
+        .header-cell {
+            background: #3a3a3a;
+            color: #d4af37;
+            font-size: 1.2em;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">DEPARTURES</div>
+    
+    <div class="board-container">
+        <div class="board" id="board">
+            <div class="header-row">
+                <div class="header-cell">AIRLINE</div>
+                <div class="header-cell">FLIGHT</div>
+                <div class="header-cell">DESTINATION</div>
+                <div class="header-cell">TIME</div>
+                <div class="header-cell">STATUS</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const airlines = [
+            { name: 'PAN AM', logo: '🛩️ PA' },
+            { name: 'TWA', logo: '✈️ TW' },
+            { name: 'EASTERN', logo: '🛫 EA' },
+            { name: 'BRANIFF', logo: '✈️ BN' },
+            { name: 'NATIONAL', logo: '🛩️ NA' },
+            { name: 'DELTA', logo: '✈️ DL' },
+            { name: 'UNITED', logo: '🛫 UA' },
+            { name: 'AMERICAN', logo: '✈️ AA' },
+            { name: 'WESTERN', logo: '🛩️ WA' },
+            { name: 'CONTINENTAL', logo: '✈️ CO' }
+        ];
+
+        const destinations = [
+            'NEW YORK', 'LONDON', 'PARIS', 'TOKYO', 'LOS ANGELES',
+            'CHICAGO', 'MIAMI', 'SAN FRANCISCO', 'BOSTON', 'DALLAS',
+            'SEATTLE', 'ATLANTA', 'PHILADELPHIA', 'DETROIT', 'HOUSTON',
+            'ROME', 'MADRID', 'AMSTERDAM', 'FRANKFURT', 'ZURICH',
+            'MONTREAL', 'TORONTO', 'VANCOUVER', 'MEXICO CITY', 'HONOLULU',
+            'ANCHORAGE', 'DENVER', 'PHOENIX', 'LAS VEGAS', 'NEW ORLEANS',
+            'MEMPHIS', 'KANSAS CITY', 'MINNEAPOLIS', 'MILWAUKEE', 'CINCINNATI',
+            'PITTSBURGH', 'CLEVELAND', 'COLUMBUS', 'INDIANAPOLIS', 'ST LOUIS',
+            'ORLANDO', 'TAMPA', 'NASHVILLE', 'CHARLOTTE', 'BALTIMORE',
+            'WASHINGTON', 'SAN DIEGO', 'PORTLAND', 'SALT LAKE', 'BUFFALO'
+        ];
+
+        const statuses = ['ON TIME', 'BOARDING', 'DELAYED', 'DEPARTED', 'FINAL CALL'];
+
+        function generateFlight() {
+            const airline = airlines[Math.floor(Math.random() * airlines.length)];
+            const flightNum = Math.floor(Math.random() * 900) + 100;
+            const destination = destinations[Math.floor(Math.random() * destinations.length)];
+            const hour = Math.floor(Math.random() * 24);
+            const minute = Math.floor(Math.random() * 60);
+            const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+            return {
+                airline: airline.logo,
+                flight: `${airline.name.substring(0, 2)}${flightNum}`,
+                destination,
+                time,
+                status
+            };
+        }
+
+        function createCell(text, className = '') {
+            const cell = document.createElement('div');
+            cell.className = `cell ${className}`;
+            cell.innerHTML = `
+                <div class="flap-container">
+                    <div class="char">${text}</div>
+                </div>
+            `;
+            return cell;
+        }
+
+        function updateBoard() {
+            const board = document.getElementById('board');
+            const flights = [];
+            
+            for (let i = 0; i < 50; i++) {
+                flights.push(generateFlight());
+            }
+
+            // Keep header
+            const header = board.querySelector('.header-row');
+            board.innerHTML = '';
+            board.appendChild(header);
+
+            // Add flights
+            flights.forEach((flight, index) => {
+                setTimeout(() => {
+                    const row = document.createElement('div');
+                    row.className = 'flight-row';
+                    
+                    const airlineCell = createCell(flight.airline, 'airline-logo');
+                    const flightCell = createCell(flight.flight);
+                    const destCell = createCell(flight.destination);
+                    const timeCell = createCell(flight.time);
+                    const statusCell = createCell(flight.status);
+
+                    row.appendChild(airlineCell);
+                    row.appendChild(flightCell);
+                    row.appendChild(destCell);
+                    row.appendChild(timeCell);
+                    row.appendChild(statusCell);
+
+                    board.appendChild(row);
+
+                    // Add flip animation
+                    [airlineCell, flightCell, destCell, timeCell, statusCell].forEach(cell => {
+                        cell.classList.add('flip');
+                        setTimeout(() => cell.classList.remove('flip'), 600);
+                    });
+                }, index * 200);
+            });
+        }
+
+        // Initial load
+        updateBoard();
+
+        // Refresh every 25 seconds
+        setInterval(updateBoard, 25000);
+
+        // Rotate display every 10 seconds
+        setInterval(() => {
+            const cells = document.querySelectorAll('.cell:not(.header-cell)');
+            cells.forEach((cell, index) => {
+                setTimeout(() => {
+                    cell.classList.add('flip');
+                    setTimeout(() => cell.classList.remove('flip'), 600);
+                }, index * 50);
+            });
+        }, 10000);
+    </script>
+</body>
+</html>
