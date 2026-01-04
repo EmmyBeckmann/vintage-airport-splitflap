@@ -20,8 +20,21 @@ body { background: #0a0a0a; font-family: 'Roboto Mono', 'Courier New', monospace
 .flap:last-child { border-right: none; }
 .flap::before { content: ''; position: absolute; top: 50%; left: -2px; right: -2px; height: 2px; background: #2a2a2a; z-index: 5; }
 .char { color: #fff; font-size: 1.7em; font-weight: 700; position: relative; z-index: 3; }
-.flip { animation: flip 0.25s ease-in-out; }
-@keyframes flip { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.1); opacity: 0.4; } }
+.spinning { animation: spinFast 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+@keyframes spinFast {
+0% { transform: perspective(400px) rotateX(0deg); }
+8% { transform: perspective(400px) rotateX(180deg); }
+16% { transform: perspective(400px) rotateX(360deg); }
+24% { transform: perspective(400px) rotateX(540deg); }
+32% { transform: perspective(400px) rotateX(720deg); }
+40% { transform: perspective(400px) rotateX(900deg); }
+50% { transform: perspective(400px) rotateX(1080deg); }
+60% { transform: perspective(400px) rotateX(1260deg); }
+70% { transform: perspective(400px) rotateX(1440deg); }
+80% { transform: perspective(400px) rotateX(1620deg); }
+90% { transform: perspective(400px) rotateX(1800deg); }
+100% { transform: perspective(400px) rotateX(1800deg); }
+}
 </style>
 </head>
 <body>
@@ -53,9 +66,10 @@ function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webk
 function updateClock(){const n=new Date();const h=n.getHours().toString().padStart(2,'0');const m=n.getMinutes().toString().padStart(2,'0');const s=n.getSeconds().toString().padStart(2,'0');document.getElementById('clock').textContent=h+':'+m+':'+s;}
 function playClack(){if(!audioCtx)return;try{const o=audioCtx.createBufferSource(),g=audioCtx.createGain(),b=audioCtx.createBuffer(1,2205,44100),d=b.getChannelData(0);for(let i=0;i<2205;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/300);o.buffer=b;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(0.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.05);o.start();o.stop(audioCtx.currentTime+0.05);}catch(e){}}
 function makeFlaps(txt,w){const d=document.createElement('div');d.className='flaps';d.style.width=w+'px';const p=txt.padEnd(Math.floor(w/28),' ');for(let c of p){const f=document.createElement('div');f.className='flap';f.innerHTML='<span class="char">'+c+'</span>';d.appendChild(f);}return d;}
+function spinFlap(flap){flap.classList.add('spinning');for(let i=0;i<10;i++){setTimeout(()=>playClack(),i*250);}setTimeout(()=>flap.classList.remove('spinning'),2500);}
 function genFlight(){const now=new Date();const h=now.getHours();const m=now.getMinutes();const rh=h+Math.floor(Math.random()*8);const rm=Math.floor(Math.random()*60);const th=(rh%24).toString().padStart(2,'0');const tm=rm.toString().padStart(2,'0');const al=airlines[Math.floor(Math.random()*airlines.length)];const dest=al.routes[Math.floor(Math.random()*al.routes.length)];return {airline:al,flight:Math.floor(Math.random()*900)+100,dest:dest,time:th+':'+tm,timeNum:rh*60+rm,status:statuses[Math.floor(Math.random()*statuses.length)]}}
-function update(){const fs=[];const now=new Date();const nm=now.getHours()*60+now.getMinutes();for(let i=0;i<50;i++){fs.push(genFlight());}fs.sort((a,b)=>{let ta=a.timeNum;let tb=b.timeNum;if(ta<nm)ta+=1440;if(tb<nm)tb+=1440;return ta-tb;});const c=document.getElementById('flights');c.innerHTML='';fs.forEach((f,i)=>setTimeout(()=>{const r=document.createElement('div');r.className='row';const logo=document.createElement('div');logo.className='logo';logo.innerHTML='<img src="'+f.airline.logo+'" alt="'+f.airline.code+'">';const fnum=makeFlaps(f.airline.code+f.flight,160);const dest=makeFlaps(f.dest,450);const time=makeFlaps(f.time,130);const stat=makeFlaps(f.status,160);r.appendChild(logo);r.appendChild(fnum);r.appendChild(dest);r.appendChild(time);r.appendChild(stat);c.appendChild(r);setTimeout(()=>{r.querySelectorAll('.flap').forEach((fl,idx)=>setTimeout(()=>{playClack();fl.classList.add('flip');setTimeout(()=>fl.classList.remove('flip'),250);},idx*25));},50);},i*80));}
-function randFlips(){const fs=document.querySelectorAll('.flap');const sel=Array.from(fs).sort(()=>Math.random()-0.5).slice(0,20);sel.forEach((f,i)=>setTimeout(()=>{playClack();f.classList.add('flip');setTimeout(()=>f.classList.remove('flip'),250);},i*60));}
+function update(){const fs=[];const now=new Date();const nm=now.getHours()*60+now.getMinutes();for(let i=0;i<50;i++){fs.push(genFlight());}fs.sort((a,b)=>{let ta=a.timeNum;let tb=b.timeNum;if(ta<nm)ta+=1440;if(tb<nm)tb+=1440;return ta-tb;});const c=document.getElementById('flights');c.innerHTML='';fs.forEach((f,i)=>setTimeout(()=>{const r=document.createElement('div');r.className='row';const logo=document.createElement('div');logo.className='logo';logo.innerHTML='<img src="'+f.airline.logo+'" alt="'+f.airline.code+'">';const fnum=makeFlaps(f.airline.code+f.flight,160);const dest=makeFlaps(f.dest,450);const time=makeFlaps(f.time,130);const stat=makeFlaps(f.status,160);r.appendChild(logo);r.appendChild(fnum);r.appendChild(dest);r.appendChild(time);r.appendChild(stat);c.appendChild(r);setTimeout(()=>{r.querySelectorAll('.flap').forEach((fl,idx)=>setTimeout(()=>spinFlap(fl),idx*100));},50);},i*80));}
+function randFlips(){const fs=document.querySelectorAll('.flap');const sel=Array.from(fs).sort(()=>Math.random()-0.5).slice(0,8);sel.forEach((f,i)=>setTimeout(()=>spinFlap(f),i*300));}
 document.body.addEventListener('click',initAudio,{once:true});
 updateClock();setInterval(updateClock,1000);update();setInterval(update,20000);setInterval(randFlips,6000);
 </script>
