@@ -76,6 +76,7 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
+            perspective: 600px;
         }
 
         .cell::before {
@@ -86,16 +87,52 @@
             right: 0;
             height: 1px;
             background: #222;
+            z-index: 5;
         }
 
-        .cell-content {
+        .flap-wrapper {
             position: relative;
-            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flap {
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            backface-visibility: hidden;
+            overflow: hidden;
+        }
+
+        .flap-top {
+            top: 0;
+            transform-origin: bottom;
+        }
+
+        .flap-bottom {
+            bottom: 0;
+            transform-origin: top;
+        }
+
+        .flap-content {
+            position: absolute;
+            width: 100%;
+            text-align: center;
             font-size: 1.4em;
             color: #fff;
             font-weight: 400;
-            text-align: center;
             letter-spacing: 1px;
+        }
+
+        .flap-top .flap-content {
+            top: 100%;
+        }
+
+        .flap-bottom .flap-content {
+            bottom: 100%;
         }
 
         .airline-name {
@@ -111,16 +148,31 @@
             font-weight: 500;
         }
 
-        /* Split-flap animation */
-        .cell.flipping {
-            animation: flip 0.6s ease-in-out;
+        /* Authentic Split-Flap Animation */
+        @keyframes flipTopDown {
+            0% { transform: rotateX(0deg); }
+            100% { transform: rotateX(-90deg); }
         }
 
-        @keyframes flip {
-            0% { transform: rotateX(0deg); }
-            50% { transform: rotateX(90deg); opacity: 0.5; }
+        @keyframes flipBottomUp {
+            0% { transform: rotateX(90deg); }
             100% { transform: rotateX(0deg); }
         }
+
+        .cell.flipping .flap-top {
+            animation: flipTopDown 0.3s ease-in forwards;
+        }
+
+        .cell.flipping .flap-bottom {
+            animation: flipBottomUp 0.3s 0.3s ease-out forwards;
+        }
+
+        /* Status Color Coding */
+        .status-on-time { color: #00ff00 !important; }
+        .status-boarding { color: #ffaa00 !important; }
+        .status-delayed { color: #ff0000 !important; }
+        .status-final-call { color: #ff6600 !important; }
+        .status-departed { color: #888 !important; }
 
         @media (max-width: 1400px) {
             .board {
@@ -135,7 +187,7 @@
                 margin-bottom: 10px;
             }
             
-            .cell-content {
+            .flap-content {
                 font-size: 1.1em;
             }
         }
@@ -159,6 +211,26 @@
     </div>
 
     <script>
+        // Create Solari clicking sound
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playClickSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.05);
+        }
+
         const airlines = [
             { code: 'PA', name: 'PAN AM' },
             { code: 'TW', name: 'TWA' },
@@ -187,6 +259,10 @@
 
         const statuses = ['ON TIME', 'BOARDING', 'DELAYED', 'DEPARTED', 'FINAL CALL'];
 
+        function getStatusClass(status) {
+            return 'status-' + status.toLowerCase().replace(' ', '-');
+        }
+
         function generateFlight() {
             const airline = airlines[Math.floor(Math.random() * airlines.length)];
             const flightNum = Math.floor(Math.random() * 900) + 100;
@@ -205,21 +281,33 @@
             };
         }
 
-        function createCell(content, className = '', isAirline = false) {
+        function createCell(content, className = '', isAirline = false, isStatus = false) {
             const cell = document.createElement('div');
             cell.className = `cell ${className}`;
             
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flap-wrapper';
+            
             if (isAirline) {
-                cell.innerHTML = `
-                    <div class="cell-content">
+                wrapper.innerHTML = `
+                    <div class="flap-content">
                         <span class="airline-name">${content.name}</span>
                         <span class="airline-code">${content.code}</span>
                     </div>
                 `;
             } else {
-                cell.innerHTML = `<div class="cell-content">${content}</div>`;
+                const statusClass = isStatus ? getStatusClass(content) : '';
+                wrapper.innerHTML = `
+                    <div class="flap flap-top">
+                        <div class="flap-content ${statusClass}">${content}</div>
+                    </div>
+                    <div class="flap flap-bottom">
+                        <div class="flap-content ${statusClass}">${content}</div>
+                    </div>
+                `;
             }
             
+            cell.appendChild(wrapper);
             return cell;
         }
 
@@ -229,27 +317,24 @@
             const board = document.getElementById('board');
             const header = board.querySelector('.header-row');
             
-            // Generate new flights
             currentFlights = [];
             for (let i = 0; i < 50; i++) {
                 currentFlights.push(generateFlight());
             }
 
-            // Clear board except header
             board.innerHTML = '';
             board.appendChild(header);
 
-            // Add flights with staggered animation
             currentFlights.forEach((flight, index) => {
                 setTimeout(() => {
                     const row = document.createElement('div');
                     row.className = 'flight-row';
                     
-                    const airlineCell = createCell(flight.airline, '', true);
-                    const flightCell = createCell(flight.flight);
-                    const destCell = createCell(flight.destination);
-                    const timeCell = createCell(flight.time);
-                    const statusCell = createCell(flight.status);
+                    const airlineCell = createCell(flight.airline, '', true, false);
+                    const flightCell = createCell(flight.flight, '', false, false);
+                    const destCell = createCell(flight.destination, '', false, false);
+                    const timeCell = createCell(flight.time, '', false, false);
+                    const statusCell = createCell(flight.status, '', false, true);
 
                     row.appendChild(airlineCell);
                     row.appendChild(flightCell);
@@ -259,33 +344,30 @@
 
                     board.appendChild(row);
 
-                    // Add flip animation
-                    [airlineCell, flightCell, destCell, timeCell, statusCell].forEach(cell => {
-                        cell.classList.add('flipping');
-                        setTimeout(() => cell.classList.remove('flipping'), 600);
-                    });
-                }, index * 100);
+                    setTimeout(() => {
+                        playClickSound();
+                        [flightCell, destCell, timeCell, statusCell].forEach(cell => {
+                            cell.classList.add('flipping');
+                            setTimeout(() => cell.classList.remove('flipping'), 600);
+                        });
+                    }, 50);
+                }, index * 150);
             });
         }
 
-        // Rotate/flip display periodically
         function rotateDisplay() {
             const cells = document.querySelectorAll('.cell:not(.header-cell)');
             cells.forEach((cell, index) => {
                 setTimeout(() => {
+                    playClickSound();
                     cell.classList.add('flipping');
                     setTimeout(() => cell.classList.remove('flipping'), 600);
                 }, index * 30);
             });
         }
 
-        // Initial load
         updateBoard();
-
-        // Refresh every 25 seconds
         setInterval(updateBoard, 25000);
-
-        // Rotate display every 10 seconds
         setInterval(rotateDisplay, 10000);
     </script>
 </body>
