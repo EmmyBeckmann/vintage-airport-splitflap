@@ -7,37 +7,24 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #0a0a0a; font-family: 'Roboto Mono', 'Courier New', monospace; color: #fff; padding: 20px; }
+#sound-banner { position: fixed; top: 0; left: 0; right: 0; background: #ffa500; color: #000; text-align: center; padding: 15px; font-size: 1.2em; font-weight: 700; z-index: 1000; cursor: pointer; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 .time-bar { text-align: center; font-size: 1.8em; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 5px; }
 .time-bar span { color: #ffa500; font-weight: 700; margin-left: 15px; }
 .header { text-align: center; font-size: 2.5em; letter-spacing: 10px; margin-bottom: 25px; font-weight: 300; }
 .board { max-width: 1700px; margin: 0 auto; background: #1a1a1a; padding: 25px; border-radius: 5px; }
 .cols { display: grid; grid-template-columns: 110px 160px 1fr 130px 160px; gap: 8px; margin-bottom: 18px; color: #999; font-size: 0.95em; font-weight: 700; padding: 0 5px; }
 .row { display: grid; grid-template-columns: 110px 160px 1fr 130px 160px; gap: 8px; margin-bottom: 10px; }
-.logo { width: 110px; height: 58px; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #000; padding: 8px; }
-.logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.airline-code { width: 110px; height: 58px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: 700; color: #fff; border: 2px solid #333; }
 .flaps { display: flex; gap: 2px; background: #000; padding: 6px; border-radius: 4px; min-height: 58px; align-items: center; }
-.flap { width: 26px; height: 48px; background: #000; position: relative; display: flex; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; }
+.flap { width: 26px; height: 48px; background: #000; position: relative; display: flex; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; overflow: hidden; }
 .flap:last-child { border-right: none; }
 .flap::before { content: ''; position: absolute; top: 50%; left: -2px; right: -2px; height: 2px; background: #2a2a2a; z-index: 5; }
 .char { color: #fff; font-size: 1.7em; font-weight: 700; position: relative; z-index: 3; }
-.spinning { animation: spinFast 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-@keyframes spinFast {
-0% { transform: perspective(400px) rotateX(0deg); }
-8% { transform: perspective(400px) rotateX(180deg); }
-16% { transform: perspective(400px) rotateX(360deg); }
-24% { transform: perspective(400px) rotateX(540deg); }
-32% { transform: perspective(400px) rotateX(720deg); }
-40% { transform: perspective(400px) rotateX(900deg); }
-50% { transform: perspective(400px) rotateX(1080deg); }
-60% { transform: perspective(400px) rotateX(1260deg); }
-70% { transform: perspective(400px) rotateX(1440deg); }
-80% { transform: perspective(400px) rotateX(1620deg); }
-90% { transform: perspective(400px) rotateX(1800deg); }
-100% { transform: perspective(400px) rotateX(1800deg); }
-}
 </style>
 </head>
 <body>
+<div id="sound-banner">🔊 Click anywhere to enable sound effects</div>
 <div class="time-bar">LOCAL TIME:<span id="clock">00:00:00</span></div>
 <div class="header">DEPARTURES</div>
 <div class="board">
@@ -45,30 +32,31 @@ body { background: #0a0a0a; font-family: 'Roboto Mono', 'Courier New', monospace
 <div id="flights"></div>
 </div>
 <script>
+const CHARS='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
 let audioCtx=null;
 const airlines=[
-{code:'BA',name:'British Airways',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/British_Airways_Logo.svg/120px-British_Airways_Logo.svg.png',routes:['NEW YORK','PARIS','FRANKFURT','ROME','ATHENS','MADRID','LISBON','GENEVA','ZURICH','BRUSSELS','AMSTERDAM','COPENHAGEN']},
-{code:'TW',name:'TWA',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/TWA_Logo.svg/120px-TWA_Logo.svg.png',routes:['NEW YORK','BOSTON','CHICAGO','LOS ANGELES','WASHINGTON']},
-{code:'PA',name:'Pan Am',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Pan_Am_Logo.svg/120px-Pan_Am_Logo.svg.png',routes:['NEW YORK','LOS ANGELES','SAN FRANCISCO','TOKYO','HONG KONG','SYDNEY']},
-{code:'LH',name:'Lufthansa',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Lufthansa_Logo_2018.svg/120px-Lufthansa_Logo_2018.svg.png',routes:['FRANKFURT','MUNICH','BERLIN','HAMBURG','DUSSELDORF','VIENNA','ZURICH']},
-{code:'AF',name:'Air France',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Air_France_Logo.svg/120px-Air_France_Logo.svg.png',routes:['PARIS','NICE','LYON','MARSEILLE','TOULOUSE','BORDEAUX']},
-{code:'KL',name:'KLM',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/KLM_logo.svg/120px-KLM_logo.svg.png',routes:['AMSTERDAM','ROTTERDAM']},
-{code:'LY',name:'El Al',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/El_Al_Logo.svg/120px-El_Al_Logo.svg.png',routes:['TEL AVIV']},
-{code:'RG',name:'Varig',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Varig_Logo.svg/120px-Varig_Logo.svg.png',routes:['RIO DE JANEIRO','SAO PAULO','BRASILIA']},
-{code:'OA',name:'Olympic',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Olympic_Airways_logo.svg/120px-Olympic_Airways_logo.svg.png',routes:['ATHENS','THESSALONIKI']},
-{code:'AI',name:'Air India',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Air_India_Logo.svg/120px-Air_India_Logo.svg.png',routes:['BOMBAY','DELHI','CALCUTTA','BANGALORE']},
-{code:'BOAC',name:'BOAC',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/BOAC_Logo.svg/120px-BOAC_Logo.svg.png',routes:['NEW YORK','SINGAPORE','HONG KONG','JOHANNESBURG','NAIROBI','SYDNEY','TOKYO']},
-{code:'BEA',name:'BEA',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/British_European_Airways_logo.svg/120px-British_European_Airways_logo.svg.png',routes:['PARIS','AMSTERDAM','BRUSSELS','COPENHAGEN','STOCKHOLM','DUBLIN','EDINBURGH','GLASGOW','BELFAST']},
-{code:'SU',name:'Aeroflot',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Aeroflot_logo.svg/120px-Aeroflot_logo.svg.png',routes:['MOSCOW','LENINGRAD']}
+{code:'BA',name:'British Airways',color:'#1E3A8A',routes:['NEW YORK','PARIS','FRANKFURT','ROME','ATHENS','MADRID','LISBON','GENEVA','ZURICH','BRUSSELS','AMSTERDAM','COPENHAGEN']},
+{code:'TW',name:'TWA',color:'#DC2626',routes:['NEW YORK','BOSTON','CHICAGO','LOS ANGELES','WASHINGTON']},
+{code:'PA',name:'Pan Am',color:'#2563EB',routes:['NEW YORK','LOS ANGELES','SAN FRANCISCO','TOKYO','HONG KONG','SYDNEY']},
+{code:'LH',name:'Lufthansa',color:'#F59E0B',routes:['FRANKFURT','MUNICH','BERLIN','HAMBURG','DUSSELDORF','VIENNA','ZURICH']},
+{code:'AF',name:'Air France',color:'#1E40AF',routes:['PARIS','NICE','LYON','MARSEILLE','TOULOUSE','BORDEAUX']},
+{code:'KL',name:'KLM',color:'#0EA5E9',routes:['AMSTERDAM','ROTTERDAM']},
+{code:'LY',name:'El Al',color:'#3B82F6',routes:['TEL AVIV']},
+{code:'RG',name:'Varig',color:'#059669',routes:['RIO DE JANEIRO','SAO PAULO','BRASILIA']},
+{code:'OA',name:'Olympic',color:'#2563EB',routes:['ATHENS','THESSALONIKI']},
+{code:'AI',name:'Air India',color:'#DC2626',routes:['BOMBAY','DELHI','CALCUTTA','BANGALORE']},
+{code:'BOAC',name:'BOAC',color:'#1E3A8A',routes:['NEW YORK','SINGAPORE','HONG KONG','JOHANNESBURG','NAIROBI','SYDNEY','TOKYO']},
+{code:'BEA',name:'BEA',color:'#DC2626',routes:['PARIS','AMSTERDAM','BRUSSELS','COPENHAGEN','STOCKHOLM','DUBLIN','EDINBURGH','GLASGOW','BELFAST']},
+{code:'SU',name:'Aeroflot',color:'#DC2626',routes:['MOSCOW','LENINGRAD']}
 ];
-const statuses=['ON TIME','BOARDING','DELAYED','DEPARTED','FINAL CALL'];
-function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}}
+const statuses=['ON TIME','BOARDING','DELAYED','FINAL CALL'];
+function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();const banner=document.getElementById('sound-banner');if(banner){banner.style.display='none';}}}
 function updateClock(){const n=new Date();const h=n.getHours().toString().padStart(2,'0');const m=n.getMinutes().toString().padStart(2,'0');const s=n.getSeconds().toString().padStart(2,'0');document.getElementById('clock').textContent=h+':'+m+':'+s;}
 function playClack(){if(!audioCtx)return;try{const o=audioCtx.createBufferSource(),g=audioCtx.createGain(),b=audioCtx.createBuffer(1,2205,44100),d=b.getChannelData(0);for(let i=0;i<2205;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/300);o.buffer=b;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(0.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.05);o.start();o.stop(audioCtx.currentTime+0.05);}catch(e){}}
-function makeFlaps(txt,w){const d=document.createElement('div');d.className='flaps';d.style.width=w+'px';const p=txt.padEnd(Math.floor(w/28),' ');for(let c of p){const f=document.createElement('div');f.className='flap';f.innerHTML='<span class="char">'+c+'</span>';d.appendChild(f);}return d;}
-function spinFlap(flap){flap.classList.add('spinning');for(let i=0;i<10;i++){setTimeout(()=>playClack(),i*250);}setTimeout(()=>flap.classList.remove('spinning'),2500);}
-function genFlight(){const now=new Date();const h=now.getHours();const m=now.getMinutes();const rh=h+Math.floor(Math.random()*8);const rm=Math.floor(Math.random()*60);const th=(rh%24).toString().padStart(2,'0');const tm=rm.toString().padStart(2,'0');const al=airlines[Math.floor(Math.random()*airlines.length)];const dest=al.routes[Math.floor(Math.random()*al.routes.length)];return {airline:al,flight:Math.floor(Math.random()*900)+100,dest:dest,time:th+':'+tm,timeNum:rh*60+rm,status:statuses[Math.floor(Math.random()*statuses.length)]}}
-function update(){const fs=[];const now=new Date();const nm=now.getHours()*60+now.getMinutes();for(let i=0;i<50;i++){fs.push(genFlight());}fs.sort((a,b)=>{let ta=a.timeNum;let tb=b.timeNum;if(ta<nm)ta+=1440;if(tb<nm)tb+=1440;return ta-tb;});const c=document.getElementById('flights');c.innerHTML='';fs.forEach((f,i)=>setTimeout(()=>{const r=document.createElement('div');r.className='row';const logo=document.createElement('div');logo.className='logo';logo.innerHTML='<img src="'+f.airline.logo+'" alt="'+f.airline.code+'">';const fnum=makeFlaps(f.airline.code+f.flight,160);const dest=makeFlaps(f.dest,450);const time=makeFlaps(f.time,130);const stat=makeFlaps(f.status,160);r.appendChild(logo);r.appendChild(fnum);r.appendChild(dest);r.appendChild(time);r.appendChild(stat);c.appendChild(r);setTimeout(()=>{r.querySelectorAll('.flap').forEach((fl,idx)=>setTimeout(()=>spinFlap(fl),idx*100));},50);},i*80));}
+function makeFlaps(txt,w){const d=document.createElement('div');d.className='flaps';d.style.width=w+'px';const p=txt.padEnd(Math.floor(w/28),' ');for(let c of p){const f=document.createElement('div');f.className='flap';const span=document.createElement('span');span.className='char';span.textContent=c;span.dataset.finalChar=c;f.appendChild(span);d.appendChild(f);}return d;}
+function spinFlap(flap){const charEl=flap.querySelector('.char');const finalChar=charEl.dataset.finalChar;let flipCount=0;const maxFlips=30;const flipInterval=setInterval(()=>{charEl.textContent=CHARS[Math.floor(Math.random()*CHARS.length)];playClack();flipCount++;if(flipCount>=maxFlips){clearInterval(flipInterval);charEl.textContent=finalChar;}},80);}
+function genFlight(){const now=new Date();const h=now.getHours();const m=now.getMinutes();const rh=h+Math.floor(Math.random()*8);const rm=Math.floor(Math.random()*60);const th=(rh%24).toString().padStart(2,'0');const tm=rm.toString().padStart(2,'0');const al=airlines[Math.floor(Math.random()*airlines.length)];const dest=al.routes[Math.floor(Math.random()*al.routes.length)];const flightTimeNum=rh*60+rm;const currentTimeNum=h*60+m;let status;if(currentTimeNum>flightTimeNum+15){status='DEPARTED';}else if(currentTimeNum>flightTimeNum){status='FINAL CALL';}else{status=statuses[Math.floor(Math.random()*(statuses.length-1))];}return {airline:al,flight:Math.floor(Math.random()*900)+100,dest:dest,time:th+':'+tm,timeNum:flightTimeNum,status:status}}
+function update(){const fs=[];const now=new Date();const nm=now.getHours()*60+now.getMinutes();for(let i=0;i<50;i++){fs.push(genFlight());}fs.sort((a,b)=>{let ta=a.timeNum;let tb=b.timeNum;if(ta<nm)ta+=1440;if(tb<nm)tb+=1440;return ta-tb;});const c=document.getElementById('flights');c.innerHTML='';fs.forEach((f,i)=>setTimeout(()=>{const r=document.createElement('div');r.className='row';const code=document.createElement('div');code.className='airline-code';code.style.background=f.airline.color;code.textContent=f.airline.code;const fnum=makeFlaps(f.airline.code+f.flight,160);const dest=makeFlaps(f.dest,450);const time=makeFlaps(f.time,130);const stat=makeFlaps(f.status,160);r.appendChild(code);r.appendChild(fnum);r.appendChild(dest);r.appendChild(time);r.appendChild(stat);c.appendChild(r);setTimeout(()=>{r.querySelectorAll('.flap').forEach((fl,idx)=>setTimeout(()=>spinFlap(fl),idx*100));},50);},i*80));}
 function randFlips(){const fs=document.querySelectorAll('.flap');const sel=Array.from(fs).sort(()=>Math.random()-0.5).slice(0,8);sel.forEach((f,i)=>setTimeout(()=>spinFlap(f),i*300));}
 document.body.addEventListener('click',initAudio,{once:true});
 updateClock();setInterval(updateClock,1000);update();setInterval(update,20000);setInterval(randFlips,6000);
