@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 London Heathrow Departures</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Roboto', sans-serif; color: #fff; padding: 20px; min-height: 100vh; }
+.time-bar { text-align: center; font-size: 1.8em; margin-bottom: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; backdrop-filter: blur(10px); }
+.time-bar span { color: #ffd700; font-weight: 700; margin-left: 15px; }
+.header { text-align: center; font-size: 2.5em; letter-spacing: 8px; margin-bottom: 25px; font-weight: 300; position: relative; }
+.sound-btn { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 8px 12px; font-size: 0.3em; border-radius: 3px; cursor: pointer; opacity: 0.6; transition: opacity 0.3s; }
+.sound-btn:hover { opacity: 1; }
+.board { max-width: 1700px; margin: 0 auto; background: rgba(255,255,255,0.15); padding: 25px; border-radius: 15px; backdrop-filter: blur(20px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+.cols { display: grid; grid-template-columns: 110px 160px 1fr 130px 160px; gap: 8px; margin-bottom: 18px; color: rgba(255,255,255,0.7); font-size: 0.95em; font-weight: 700; padding: 0 5px; }
+.row { display: grid; grid-template-columns: 110px 160px 1fr 130px 160px; gap: 8px; margin-bottom: 10px; }
+.airline-logo { width: 110px; height: 58px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #fff; padding: 8px; }
+.airline-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.flaps { display: flex; gap: 2px; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 8px; min-height: 58px; align-items: center; }
+.flap { width: 26px; height: 48px; background: linear-gradient(to bottom, #2c3e50 0%, #34495e 50%, #2c3e50 100%); position: relative; display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(0,0,0,0.3); border-radius: 2px; }
+.flap:last-child { border-right: none; }
+.flap::before { content: ''; position: absolute; top: 50%; left: -2px; right: -2px; height: 2px; background: rgba(0,0,0,0.5); z-index: 5; }
+.char { color: #fff; font-size: 1.7em; font-weight: 700; position: relative; z-index: 3; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+@media (max-width: 768px) {
+  body { padding: 10px; }
+  .time-bar { font-size: 1.2em; padding: 10px; }
+  .header { font-size: 1.5em; letter-spacing: 5px; }
+  .board { padding: 15px; }
+  .cols { grid-template-columns: 60px 90px 1fr 70px 90px; font-size: 0.7em; }
+  .row { grid-template-columns: 60px 90px 1fr 70px 90px; }
+  .airline-logo { width: 60px; height: 35px; }
+  .flap { width: 14px; height: 28px; }
+  .char { font-size: 1.2em; }
+}
+</style>
+</head>
+<body>
+<div class="time-bar">LONDON HEATHROW (LHR):<span id="clock">00:00:00</span></div>
+<div class="header">DEPARTURES<button class="sound-btn" id="sound-btn">🔊</button></div>
+<div class="board">
+<div class="cols"><div>AIRLINE</div><div>FLIGHT</div><div>DESTINATION</div><div>TIME</div><div>STATUS</div></div>
+<div id="flights"></div>
+</div>
+<script>
+const CHARS='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
+let audioCtx=null;
+const airlines=[
+{name:'British Airways',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/4/42/British_Airways_Logo.svg/120px-British_Airways_Logo.svg.png',routes:['NEW YORK JFK','LOS ANGELES','DUBAI','SINGAPORE','HONG KONG','SYDNEY','TORONTO','JOHANNESBURG']},
+{name:'American Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/2/23/American_Airlines_logo_2013.svg/120px-American_Airlines_logo_2013.svg.png',routes:['NEW YORK JFK','CHICAGO','DALLAS','PHILADELPHIA','MIAMI']},
+{name:'United Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/e/e0/United_Airlines_Logo.svg/120px-United_Airlines_Logo.svg.png',routes:['NEWARK','WASHINGTON','SAN FRANCISCO','HOUSTON','DENVER']},
+{name:'Lufthansa',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Lufthansa_Logo_2018.svg/120px-Lufthansa_Logo_2018.svg.png',routes:['FRANKFURT','MUNICH','BERLIN']},
+{name:'Air France',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Air_France_Logo.svg/120px-Air_France_Logo.svg.png',routes:['PARIS CDG','NICE','LYON']},
+{name:'Emirates',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Emirates_logo.svg/120px-Emirates_logo.svg.png',routes:['DUBAI','MELBOURNE','AUCKLAND']},
+{name:'Qatar Airways',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Qatar_Airways_Logo.svg/120px-Qatar_Airways_Logo.svg.png',routes:['DOHA','DUBAI','PERTH']},
+{name:'Virgin Atlantic',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Virgin_Atlantic_logo_2010.svg/120px-Virgin_Atlantic_logo_2010.svg.png',routes:['NEW YORK JFK','LOS ANGELES','ORLANDO','MIAMI']},
+{name:'Singapore Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/Singapore_Airlines_Logo_2.svg/120px-Singapore_Airlines_Logo_2.svg.png',routes:['SINGAPORE','SYDNEY','TOKYO']},
+{name:'Cathay Pacific',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Cathay_Pacific_logo.svg/120px-Cathay_Pacific_logo.svg.png',routes:['HONG KONG']},
+{name:'Turkish Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Turkish_Airlines_logo_2019_compact.svg/120px-Turkish_Airlines_logo_2019_compact.svg.png',routes:['ISTANBUL','ANKARA']},
+{name:'Aer Lingus',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aer_Lingus_logo.svg/120px-Aer_Lingus_logo.svg.png',routes:['DUBLIN','CORK','SHANNON']}
+];
+const statuses=['ON TIME','BOARDING','DELAYED','FINAL CALL','GATE CLOSING'];
+function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();const btn=document.getElementById('sound-btn');if(btn){btn.style.opacity='0.3';btn.disabled=true;}}}
+function updateClock(){const n=new Date();const h=n.getHours().toString().padStart(2,'0');const m=n.getMinutes().toString().padStart(2,'0');const s=n.getSeconds().toString().padStart(2,'0');document.getElementById('clock').textContent=h+':'+m+':'+s;}
+function playClack(){if(!audioCtx)return;try{const o=audioCtx.createBufferSource(),g=audioCtx.createGain(),b=audioCtx.createBuffer(1,2205,44100),d=b.getChannelData(0);for(let i=0;i<2205;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/300);o.buffer=b;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(0.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.05);o.start();o.stop(audioCtx.currentTime+0.05);}catch(e){}}
+function makeFlaps(txt,w){const d=document.createElement('div');d.className='flaps';d.style.width=w+'px';const p=txt.padEnd(Math.floor(w/28),' ');for(let c of p){const f=document.createElement('div');f.className='flap';const span=document.createElement('span');span.className='char';span.textContent=c;span.dataset.finalChar=c;f.appendChild(span);d.appendChild(f);}return d;}
+function spinFlap(flap){const charEl=flap.querySelector('.char');const finalChar=charEl.dataset.finalChar;let flipCount=0;const maxFlips=30;const flipInterval=setInterval(()=>{charEl.textContent=CHARS[Math.floor(Math.random()*CHARS.length)];playClack();flipCount++;if(flipCount>=maxFlips){clearInterval(flipInterval);charEl.textContent=finalChar;}},80);}
+function genFlight(){const now=new Date();const h=now.getHours();const m=now.getMinutes();const rh=h+Math.floor(Math.random()*8)-2;const rm=Math.floor(Math.random()*60);const th=(rh%24).toString().padStart(2,'0');const tm=rm.toString().padStart(2,'0');const al=airlines[Math.floor(Math.random()*airlines.length)];const dest=al.routes[Math.floor(Math.random()*al.routes.length)];const flightTimeNum=rh*60+rm;const currentTimeNum=h*60+m;let status;if(currentTimeNum>flightTimeNum+15){status='DEPARTED';}else if(currentTimeNum>flightTimeNum){status='FINAL CALL';}else{status=statuses[Math.floor(Math.random()*(statuses.length-2))];}return {airline:al,flight:al.name.substring(0,2).toUpperCase()+Math.floor(Math.random()*900)+100,dest:dest,time:th+':'+tm,timeNum:flightTimeNum,status:status}}
+function update(){const fs=[];const now=new Date();const nm=now.getHours()*60+now.getMinutes();for(let i=0;i<50;i++){fs.push(genFlight());}fs.sort((a,b)=>{let ta=a.timeNum;let tb=b.timeNum;if(ta<nm)ta+=1440;if(tb<nm)tb+=1440;return ta-tb;});const c=document.getElementById('flights');c.innerHTML='';fs.forEach((f,i)=>setTimeout(()=>{const r=document.createElement('div');r.className='row';const logo=document.createElement('div');logo.className='airline-logo';logo.innerHTML='<img src="'+f.airline.logo+'" alt="'+f.airline.name+'">';const fnum=makeFlaps(f.flight,160);const dest=makeFlaps(f.dest,450);const time=makeFlaps(f.time,130);const stat=makeFlaps(f.status,160);r.appendChild(logo);r.appendChild(fnum);r.appendChild(dest);r.appendChild(time);r.appendChild(stat);c.appendChild(r);setTimeout(()=>{r.querySelectorAll('.flap').forEach((fl,idx)=>setTimeout(()=>spinFlap(fl),idx*100));},50);},i*80));}
+function randFlips(){const fs=document.querySelectorAll('.flap');const sel=Array.from(fs).sort(()=>Math.random()-0.5).slice(0,8);sel.forEach((f,i)=>setTimeout(()=>spinFlap(f),i*300));}
+document.getElementById('sound-btn').addEventListener('click',initAudio,{once:true});
+updateClock();setInterval(updateClock,1000);update();setInterval(update,20000);setInterval(randFlips,6000);
+</script>
+</body>
+</html>
