@@ -47,18 +47,26 @@ body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-famil
 const CHARS='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
 let audioCtx=null;
 const airlines=[
-{name:'British Airways',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/4/42/British_Airways_Logo.svg/120px-British_Airways_Logo.svg.png',routes:['NEW YORK JFK','LOS ANGELES','DUBAI','SINGAPORE','HONG KONG','SYDNEY','TORONTO','JOHANNESBURG']},
-{name:'American Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/2/23/American_Airlines_logo_2013.svg/120px-American_Airlines_logo_2013.svg.png',routes:['NEW YORK JFK','CHICAGO','DALLAS','PHILADELPHIA','MIAMI']},
-{name:'United Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/e/e0/United_Airlines_Logo.svg/120px-United_Airlines_Logo.svg.png',routes:['NEWARK','WASHINGTON','SAN FRANCISCO','HOUSTON','DENVER']},
-{name:'Lufthansa',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Lufthansa_Logo_2018.svg/120px-Lufthansa_Logo_2018.svg.png',routes:['FRANKFURT','MUNICH','BERLIN']},
-{name:'Air France',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Air_France_Logo.svg/120px-Air_France_Logo.svg.png',routes:['PARIS CDG','NICE','LYON']},
-{name:'Emirates',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Emirates_logo.svg/120px-Emirates_logo.svg.png',routes:['DUBAI','MELBOURNE','AUCKLAND']},
-{name:'Qatar Airways',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Qatar_Airways_Logo.svg/120px-Qatar_Airways_Logo.svg.png',routes:['DOHA','DUBAI','PERTH']},
-{name:'Virgin Atlantic',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Virgin_Atlantic_logo_2010.svg/120px-Virgin_Atlantic_logo_2010.svg.png',routes:['NEW YORK JFK','LOS ANGELES','ORLANDO','MIAMI']},
-{name:'Singapore Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/Singapore_Airlines_Logo_2.svg/120px-Singapore_Airlines_Logo_2.svg.png',routes:['SINGAPORE','SYDNEY','TOKYO']},
-{name:'Cathay Pacific',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Cathay_Pacific_logo.svg/120px-Cathay_Pacific_logo.svg.png',routes:['HONG KONG']},
-{name:'Turkish Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Turkish_Airlines_logo_2019_compact.svg/120px-Turkish_Airlines_logo_2019_compact.svg.png',routes:['ISTANBUL','ANKARA']},
-{name:'Aer Lingus',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aer_Lingus_logo.svg/120px-Aer_Lingus_logo.svg.png',routes:['DUBLIN','CORK','SHANNON']}
+  {name:'British Airways',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/4/42/British_Airways_Logo.svg/120px-British_Airways_Logo.svg.png',routes:['NEW YORK JFK','LOS ANGELES','DUBAI','SINGAPORE','HONG KONG','SYDNEY','TORONTO','JOHANNESBURG','TOKYO','DELHI','MUMBAI']},
+  {name:'Virgin Atlantic',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Virgin_Atlantic_logo_2010.svg/120px-Virgin_Atlantic_logo_2010.svg.png',routes:['NEW YORK JFK','LOS ANGELES','ORLANDO','MIAMI','BARBADOS','JAMAICA','LAGOS','DELHI','MUMBAI','JOHANNESBURG','CAPE TOWN']},
+  {name:'Emirates',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Emirates_logo.svg/120px-Emirates_logo.svg.png',routes:['DUBAI','MELBOURNE','AUCKLAND','BANGKOK','SINGAPORE']},
+  {name:'Qatar Airways',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/9/9b/Qatar_Airways_Logo.svg/120px-Qatar_Airways_Logo.svg.png',routes:['DOHA','SINGAPORE','SYDNEY','BANGKOK']},
+  {name:'Lufthansa',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Lufthansa_Logo_2018.svg/120px-Lufthansa_Logo_2018.svg.png',routes:['FRANKFURT','MUNICH','BERLIN','HAMBURG']},
+  {name:'Air France',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Air_France_Logo.svg/120px-Air_France_Logo.svg.png',routes:['PARIS CDG','NICE','LYON','MARSEILLE']},
+  {name:'KLM',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/KLM_logo.svg/120px-KLM_logo.svg.png',routes:['AMSTERDAM']},
+  {name:'Turkish Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Turkish_Airlines_logo_2019_compact.svg/120px-Turkish_Airlines_logo_2019_compact.svg.png',routes:['ISTANBUL','ANKARA']},
+  {name:'Singapore Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/Singapore_Airlines_Logo_2.svg/120px-Singapore_Airlines_Logo_2.svg.png',routes:['SINGAPORE','SYDNEY']},
+  {name:'American Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/2/23/American_Airlines_logo_2013.svg/120px-American_Airlines_logo_2013.svg.png',routes:['NEW YORK JFK','CHICAGO','DALLAS','PHILADELPHIA','CHARLOTTE','LOS ANGELES']},
+  {name:'United Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/e/e0/United_Airlines_Logo.svg/120px-United_Airlines_Logo.svg.png',routes:['NEWARK','WASHINGTON','SAN FRANCISCO','HOUSTON','DENVER','CHICAGO']},
+  {name:'Air Canada',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Air_Canada_Logo.svg/120px-Air_Canada_Logo.svg.png',routes:['TORONTO','VANCOUVER','MONTREAL','CALGARY']},
+  {name:'Etihad Airways',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/1/13/Etihad_Airways_logo.svg/200px-Etihad_Airways_logo.svg.png',routes:['ABU DHABI','MELBOURNE','SYDNEY']},
+  {name:'Iberia',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Iberia_logo.svg/120px-Iberia_logo.svg.png',routes:['MADRID','BARCELONA','MALAGA']},
+  {name:'Aer Lingus',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/3/35/Aer_Lingus_logo.svg/120px-Aer_Lingus_logo.svg.png',routes:['DUBLIN','CORK','SHANNON']},
+  {name:'Swiss',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Swiss_International_Air_Lines_Logo_2011.svg/120px-Swiss_International_Air_Lines_Logo_2011.svg.png',routes:['ZURICH','GENEVA']},
+  {name:'SAS',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/SAS_Scandinavian_Airlines_Logo_2019.svg/120px-SAS_Scandinavian_Airlines_Logo_2019.svg.png',routes:['COPENHAGEN','STOCKHOLM','OSLO']},
+  {name:'Japan Airlines',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/e/e2/Japan_Airlines_Logo_%28Gray%29.svg/200px-Japan_Airlines_Logo_%28Gray%29.svg.png',routes:['TOKYO HANEDA','TOKYO NARITA']},
+  {name:'Cathay Pacific',logo:'https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Cathay_Pacific_logo.svg/120px-Cathay_Pacific_logo.svg.png',routes:['HONG KONG']},
+  {name:'ITA Airways',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/ITA_Airways_logo.svg/120px-ITA_Airways_logo.svg.png',routes:['ROME','MILAN']}
 ];
 const statuses=['ON TIME','BOARDING','DELAYED','FINAL CALL','GATE CLOSING'];
 function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();const btn=document.getElementById('sound-btn');if(btn){btn.style.opacity='0.3';btn.disabled=true;}}}
