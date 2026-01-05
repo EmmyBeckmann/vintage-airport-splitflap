@@ -8,11 +8,12 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #0a0a0a; font-family: 'Roboto Mono', 'Courier New', monospace; color: #fff; padding: 20px; }
-#sound-banner { position: fixed; top: 0; left: 0; right: 0; background: #ffa500; color: #000; text-align: center; padding: 15px; font-size: 1.2em; font-weight: 700; z-index: 1000; cursor: pointer; animation: pulse 2s ease-in-out infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 .time-bar { text-align: center; font-size: 1.8em; margin-bottom: 15px; padding: 15px; background: #1a1a1a; border-radius: 5px; }
 .time-bar span { color: #ffa500; font-weight: 700; margin-left: 15px; }
 .header { text-align: center; font-size: 2.5em; letter-spacing: 10px; margin-bottom: 25px; font-weight: 300; }
+  .sound-btn { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: #333; color: #999; border: 1px solid #555; padding: 8px 12px; font-size: 0.7em; border-radius: 3px; cursor: pointer; opacity: 0.6; transition: opacity 0.3s; }
+.sound-btn:hover { opacity: 1; color: #fff; }
+.header { position: relative; }
 .board { max-width: 1700px; margin: 0 auto; background: #1a1a1a; padding: 25px; border-radius: 5px; }
 .cols { display: grid; grid-template-columns: 110px 160px 1fr 130px 160px; gap: 8px; margin-bottom: 18px; color: #999; font-size: 0.95em; font-weight: 700; padding: 0 5px; }
 .row { display: grid; grid-template-columns: 110px 160px 1fr 130px 160px; gap: 8px; margin-bottom: 10px; }
@@ -56,9 +57,8 @@ body { background: #0a0a0a; font-family: 'Roboto Mono', 'Courier New', monospace
 }
 </head>
 <body>
-<div id="sound-banner">🔊 Click anywhere to enable sound effects</div>
 <div class="time-bar">LOCAL TIME:<span id="clock">00:00:00</span></div>
-<div class="header">DEPARTURES</div>
+<div class="header">DEPARTURES<button class="sound-btn" id="sound-btn">🔊</button></div>
 <div class="board">
 <div class="cols"><div>AIRLINE</div><div>FLIGHT</div><div>DESTINATION</div><div>TIME</div><div>STATUS</div></div>
 <div id="flights"></div>
@@ -82,16 +82,14 @@ const airlines=[
 {code:'SU',name:'Aeroflot',color:'#DC2626',routes:['MOSCOW','LENINGRAD']}
 ];
 const statuses=['ON TIME','BOARDING','DELAYED','FINAL CALL'];
-function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();const banner=document.getElementById('sound-banner');if(banner){banner.style.display='none';}}}
-function updateClock(){const n=new Date();const h=n.getHours().toString().padStart(2,'0');const m=n.getMinutes().toString().padStart(2,'0');const s=n.getSeconds().toString().padStart(2,'0');document.getElementById('clock').textContent=h+':'+m+':'+s;}
+function initAudio(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();const btn=document.getElementById('sound-btn');if(btn){btn.style.opacity='0.3';btn.disabled=true;}}}function updateClock(){const n=new Date();const h=n.getHours().toString().padStart(2,'0');const m=n.getMinutes().toString().padStart(2,'0');const s=n.getSeconds().toString().padStart(2,'0');document.getElementById('clock').textContent=h+':'+m+':'+s;}
 function playClack(){if(!audioCtx)return;try{const o=audioCtx.createBufferSource(),g=audioCtx.createGain(),b=audioCtx.createBuffer(1,2205,44100),d=b.getChannelData(0);for(let i=0;i<2205;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/300);o.buffer=b;o.connect(g);g.connect(audioCtx.destination);g.gain.setValueAtTime(0.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.05);o.start();o.stop(audioCtx.currentTime+0.05);}catch(e){}}
 function makeFlaps(txt,w){const d=document.createElement('div');d.className='flaps';d.style.width=w+'px';const p=txt.padEnd(Math.floor(w/28),' ');for(let c of p){const f=document.createElement('div');f.className='flap';const span=document.createElement('span');span.className='char';span.textContent=c;span.dataset.finalChar=c;f.appendChild(span);d.appendChild(f);}return d;}
 function spinFlap(flap){const charEl=flap.querySelector('.char');const finalChar=charEl.dataset.finalChar;let flipCount=0;const maxFlips=30;const flipInterval=setInterval(()=>{charEl.textContent=CHARS[Math.floor(Math.random()*CHARS.length)];playClack();flipCount++;if(flipCount>=maxFlips){clearInterval(flipInterval);charEl.textContent=finalChar;}},80);}
 function genFlight(){const now=new Date();const h=now.getHours();const m=now.getMinutes();const rh=h+Math.floor(Math.random()*8);const rm=Math.floor(Math.random()*60);const th=(rh%24).toString().padStart(2,'0');const tm=rm.toString().padStart(2,'0');const al=airlines[Math.floor(Math.random()*airlines.length)];const dest=al.routes[Math.floor(Math.random()*al.routes.length)];const flightTimeNum=rh*60+rm;const currentTimeNum=h*60+m;let status;if(currentTimeNum>flightTimeNum+15){status='DEPARTED';}else if(currentTimeNum>flightTimeNum){status='FINAL CALL';}else{status=statuses[Math.floor(Math.random()*(statuses.length-1))];}return {airline:al,flight:Math.floor(Math.random()*900)+100,dest:dest,time:th+':'+tm,timeNum:flightTimeNum,status:status}}
 function update(){const fs=[];const now=new Date();const nm=now.getHours()*60+now.getMinutes();for(let i=0;i<50;i++){fs.push(genFlight());}fs.sort((a,b)=>{let ta=a.timeNum;let tb=b.timeNum;if(ta<nm)ta+=1440;if(tb<nm)tb+=1440;return ta-tb;});const c=document.getElementById('flights');c.innerHTML='';fs.forEach((f,i)=>setTimeout(()=>{const r=document.createElement('div');r.className='row';const code=document.createElement('div');code.className='airline-code';code.style.background=f.airline.color;code.textContent=f.airline.code;const fnum=makeFlaps(f.airline.code+f.flight,160);const dest=makeFlaps(f.dest,450);const time=makeFlaps(f.time,130);const stat=makeFlaps(f.status,160);r.appendChild(code);r.appendChild(fnum);r.appendChild(dest);r.appendChild(time);r.appendChild(stat);c.appendChild(r);setTimeout(()=>{r.querySelectorAll('.flap').forEach((fl,idx)=>setTimeout(()=>spinFlap(fl),idx*100));},50);},i*80));}
 function randFlips(){const fs=document.querySelectorAll('.flap');const sel=Array.from(fs).sort(()=>Math.random()-0.5).slice(0,8);sel.forEach((f,i)=>setTimeout(()=>spinFlap(f),i*300));}
-document.body.addEventListener('click',initAudio,{once:true});
-updateClock();setInterval(updateClock,1000);update();setInterval(update,20000);setInterval(randFlips,6000);
+document.getElementById('sound-btn').addEventListener('click',initAudio,{once:true});updateClock();setInterval(updateClock,1000);update();setInterval(update,20000);setInterval(randFlips,6000);
 </script>
 </body>
 </html>
